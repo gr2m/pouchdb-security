@@ -56,13 +56,34 @@ function securityWrapper(checkAllowed, original, args) {
   if (!checkAllowed) {
     return Promise.resolve().then(throw401);
   }
-  return filledInSecurity(args)
+
+  var promise = filledInSecurity(args)
     .then(function (security) {
       if (!checkAllowed(userCtx, security)) {
         throw401();
       }
     })
-    .then(original);
+    .then(function() {
+      var originalPromise = original();
+
+      if (originalPromise.on) {
+        queuedOnCalls.forEach(function(args) {
+          originalPromise.on.apply(originalPromise, args);
+        })
+        queuedOnCalls = undefined
+        promise.on = originalPromise.on.bind(originalPromise);
+      }
+      return originalPromise;
+    });
+
+  var queuedOnCalls = [];
+  promise.on = function() {
+    queuedOnCalls.push(arguments);
+    console.log('queueing %s', arguments[0])
+    return promise;
+  }
+
+  return promise;
 }
 
 function throw401() {
