@@ -45,5 +45,6 @@
       "name": "commandoline",
       "email": "marten@marten-de-vries.nl"
     }
-  ]
+  ],
+  "repository": "github:gr2m/pouchdb-security"
 }
